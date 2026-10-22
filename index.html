@@ -130,6 +130,17 @@
     color: #e4d9c8;
   }
 
+  #audioChip {
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  #audioChip:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #e4d9c8;
+  }
+
   .chip.connected {
     color: #efd3a4;
     border-color: rgba(233, 183, 109, 0.35);
@@ -4526,11 +4537,20 @@
       if (event.code === 'Escape') {
         event.preventDefault();
         closeAssist();
+        return;
       }
-      return;
+      // Keep the panel non-modal: a mapped piano key closes it and plays.
+      if (activeKeymap()[event.code] == null) return;
+      closeAssist();
     }
     const tag = event.target && event.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (tag === 'TEXTAREA') return;
+    if (tag === 'INPUT') {
+      if (event.target.type !== 'range') return;
+      if (activeKeymap()[event.code] == null) return;
+    } else if (tag === 'SELECT') {
+      if (activeKeymap()[event.code] == null) return;
+    }
     if (event.ctrlKey || event.metaKey || event.altKey) return;
 
     if (event.code === 'Space') {
@@ -4629,6 +4649,7 @@
   dom.songSelect.addEventListener('change', () => {
     const song = songs.find((item) => item.id === dom.songSelect.value);
     if (song) selectSong(song);
+    dom.songSelect.blur();
   });
 
   dom.importBtn.addEventListener('click', () => dom.midiFile.click());
@@ -4840,6 +4861,24 @@
     Synth.setTone(state.tone);
   });
 
+  [dom.bpm, dom.vol, dom.tone].forEach((input) => {
+    const releaseFocus = () => {
+      if (document.activeElement === input) input.blur();
+    };
+    input.addEventListener('pointerup', releaseFocus);
+    input.addEventListener('change', releaseFocus);
+  });
+
+  document.addEventListener('pointerdown', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('input, select, textarea, button')) return;
+    const active = document.activeElement;
+    if (active && active !== document.body && typeof active.blur === 'function') {
+      active.blur();
+    }
+  }, true);
+
   dom.octDown.addEventListener('click', () => shiftOctave(-1));
   dom.octUp.addEventListener('click', () => shiftOctave(1));
 
@@ -4877,6 +4916,25 @@
   });
 
   dom.midiBtn.addEventListener('click', connectMidi);
+
+  dom.audioChip.title = '点击启用声音';
+  dom.audioChip.setAttribute('role', 'button');
+  dom.audioChip.setAttribute('tabindex', '0');
+  const enableAudio = () => {
+    const ac = Synth.ensure();
+    if (ac) {
+      ac.resume().catch(() => {});
+      toast('声音已启动', 1200);
+    }
+  };
+  dom.audioChip.addEventListener('click', enableAudio);
+  dom.audioChip.addEventListener('keydown', (event) => {
+    if (event.code === 'Enter' || event.code === 'Space') {
+      event.preventDefault();
+      event.stopPropagation();
+      enableAudio();
+    }
+  });
 
   document.querySelectorAll('button').forEach((button) => {
     button.addEventListener('click', () => button.blur());
