@@ -2,6 +2,10 @@
 
 一个开箱即用的 88 键网页钢琴，带瀑布流（piano roll）乐谱、自动伴奏和演奏绘画。双击 `index.html`，用 Edge / Chrome 打开即可弹奏，不需要安装，也不需要联网。
 
+## 在线体验
+
+[https://zh080521.github.io/web-piano/](https://zh080521.github.io/web-piano/)
+
 ## 预览
 
 ![瀑布流演奏](preview-waterfall.png)
