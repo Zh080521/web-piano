@@ -1,0 +1,5 @@
+.tools/
+.ghconfig/
+.edge-*/
+*.log
+Thumbs.db
