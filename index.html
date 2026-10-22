@@ -1001,6 +1001,107 @@
 
   .hints kbd { font-size: 9px; }
 
+  .assist-panel {
+    position: fixed;
+    right: 18px;
+    bottom: 22px;
+    z-index: 120;
+    width: 300px;
+    padding: 14px 15px 13px;
+    border: 1px solid rgba(233, 183, 109, 0.26);
+    border-radius: 12px;
+    background: rgba(20, 15, 11, 0.97);
+    color: #e9dcc8;
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(12px);
+  }
+
+  .assist-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+    color: #f1d8ad;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .assist-close {
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border: 0;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #bdb09e;
+    font-family: inherit;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .assist-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff1dc; }
+
+  .assist-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 8px 0;
+  }
+
+  .assist-label {
+    color: #a99d8c;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .seg {
+    display: inline-flex;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.22);
+  }
+
+  .seg button {
+    appearance: none;
+    min-width: 47px;
+    height: 25px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #8e8273;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .seg button:hover { color: #eadbc4; }
+
+  .seg button.active {
+    background: rgba(233, 183, 109, 0.18);
+    color: #f0c98d;
+    box-shadow: inset 0 0 0 1px rgba(233, 183, 109, 0.18);
+  }
+
+  .assist-hint {
+    margin: 11px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    color: #bbae9b;
+    font-size: 10.5px;
+    line-height: 1.6;
+  }
+
+  .assist-note {
+    margin: 5px 0 0;
+    color: #7f7568;
+    font-size: 9.5px;
+    line-height: 1.5;
+  }
+
   .toast {
     position: fixed;
     left: 50%;
@@ -1303,9 +1404,9 @@
     .oct { min-width: 57px; font-size: 10.5px; }
     .bpm span { min-width: 20px; }
     .bpm-unit { display: none; }
-    #labelBtn { display: none; }
     .folder-only { display: none; }
     .hints { display: none; }
+    .assist-panel { left: 12px; right: 12px; bottom: 12px; width: auto; }
     .piano-foot { font-size: 9.5px; }
     .piano-head { padding: 8px 2px; gap: 6px; }
     .head-left { width: 100%; gap: 6px; }
@@ -1404,7 +1505,7 @@
         <button id="octDown" class="btn icon" type="button" title="降低八度（←）" aria-label="降低八度">−</button>
         <span class="oct" id="octLabel">C3 – E5</span>
         <button id="octUp" class="btn icon" type="button" title="升高八度（→）" aria-label="升高八度">+</button>
-        <button id="labelBtn" class="btn active" type="button" title="显示或隐藏键位提示">键位</button>
+        <button id="labelBtn" class="btn" type="button" title="键位布局、屏幕琴键大小和键位提示" aria-expanded="false">键位</button>
         <button id="pedalBtn" class="btn pedal" type="button" title="延音踏板（按住空格）">
           <span class="pedal-dot"></span>延音<kbd>Space</kbd>
         </button>
@@ -1473,13 +1574,43 @@
     </section>
 
     <div class="hints">
-      <span><kbd>Z</kbd>–<kbd>M</kbd> / <kbd>Q</kbd>–<kbd>P</kbd> 白键</span>
-      <span><kbd>S</kbd><kbd>D</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd> / <kbd>2</kbd><kbd>3</kbd><kbd>5</kbd><kbd>6</kbd><kbd>7</kbd> 黑键</span>
+      <span id="hintWhite"><kbd>Z</kbd>–<kbd>M</kbd> / <kbd>Q</kbd>–<kbd>P</kbd> 白键</span>
+      <span id="hintBlack"><kbd>S</kbd><kbd>D</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd> / <kbd>2</kbd><kbd>3</kbd><kbd>5</kbd><kbd>6</kbd><kbd>7</kbd><kbd>9</kbd><kbd>0</kbd> 黑键</span>
       <span><kbd>←</kbd><kbd>→</kbd> 移八度</span>
       <span><kbd>Space</kbd> 延音</span>
       <span><kbd>Esc</kbd> 全部松开</span>
     </div>
   </main>
+
+  <div id="assistPanel" class="assist-panel" role="dialog" aria-label="演奏辅助" hidden>
+    <div class="assist-head">
+      <strong>演奏辅助</strong>
+      <button id="assistClose" class="assist-close" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="assist-row">
+      <span class="assist-label">电脑键位</span>
+      <div class="seg" id="keymapSeg">
+        <button type="button" data-keymap="dual">双排</button>
+        <button type="button" data-keymap="single">单排</button>
+      </div>
+    </div>
+    <div class="assist-row">
+      <span class="assist-label">屏幕琴键</span>
+      <div class="seg" id="bigSeg">
+        <button type="button" data-big="0">标准</button>
+        <button type="button" data-big="1">大键</button>
+      </div>
+    </div>
+    <div class="assist-row">
+      <span class="assist-label">键位提示</span>
+      <div class="seg" id="labelsSeg">
+        <button type="button" data-labels="1">显示</button>
+        <button type="button" data-labels="0">隐藏</button>
+      </div>
+    </div>
+    <p class="assist-hint" id="assistHint"></p>
+    <p class="assist-note">单排更适合按和弦，双排音域更宽；方向键随时换八度。</p>
+  </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
@@ -1528,7 +1659,7 @@
   const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const BLACKS = new Set([1, 3, 6, 8, 10]);
 
-  const KEYMAP = {
+  const KEYMAP_DUAL = {
     KeyZ: 0, KeyS: 1, KeyX: 2, KeyD: 3, KeyC: 4, KeyV: 5, KeyG: 6,
     KeyB: 7, KeyH: 8, KeyN: 9, KeyJ: 10, KeyM: 11,
     KeyQ: 12, Digit2: 13, KeyW: 14, Digit3: 15, KeyE: 16, KeyR: 17,
@@ -1536,12 +1667,26 @@
     KeyI: 24, Digit9: 25, KeyO: 26, Digit0: 27, KeyP: 28
   };
 
-  const KEYLABEL = {
+  const KEYLABEL_DUAL = {
     KeyZ: 'Z', KeyS: 'S', KeyX: 'X', KeyD: 'D', KeyC: 'C', KeyV: 'V', KeyG: 'G',
     KeyB: 'B', KeyH: 'H', KeyN: 'N', KeyJ: 'J', KeyM: 'M',
     KeyQ: 'Q', Digit2: '2', KeyW: 'W', Digit3: '3', KeyE: 'E', KeyR: 'R',
     Digit5: '5', KeyT: 'T', Digit6: '6', KeyY: 'Y', Digit7: '7', KeyU: 'U',
     KeyI: 'I', Digit9: '9', KeyO: 'O', Digit0: '0', KeyP: 'P'
+  };
+
+  // Single-row layout: white keys on the home row, black keys above.
+  // C4–E5, one octave + major third; arrow keys still transpose octaves.
+  const KEYMAP_SINGLE = {
+    KeyA: 12, KeyW: 13, KeyS: 14, KeyE: 15, KeyD: 16, KeyF: 17,
+    KeyT: 18, KeyG: 19, KeyY: 20, KeyH: 21, KeyU: 22, KeyJ: 23,
+    KeyK: 24, KeyO: 25, KeyL: 26, KeyP: 27, Semicolon: 28
+  };
+
+  const KEYLABEL_SINGLE = {
+    KeyA: 'A', KeyW: 'W', KeyS: 'S', KeyE: 'E', KeyD: 'D', KeyF: 'F',
+    KeyT: 'T', KeyG: 'G', KeyY: 'Y', KeyH: 'H', KeyU: 'U', KeyJ: 'J',
+    KeyK: 'K', KeyO: 'O', KeyL: 'L', KeyP: 'P', Semicolon: ';'
   };
 
   const dom = {
@@ -1592,6 +1737,14 @@
     octUp: document.getElementById('octUp'),
     octLabel: document.getElementById('octLabel'),
     labelBtn: document.getElementById('labelBtn'),
+    assistPanel: document.getElementById('assistPanel'),
+    assistClose: document.getElementById('assistClose'),
+    assistHint: document.getElementById('assistHint'),
+    keymapSeg: document.getElementById('keymapSeg'),
+    bigSeg: document.getElementById('bigSeg'),
+    labelsSeg: document.getElementById('labelsSeg'),
+    hintWhite: document.getElementById('hintWhite'),
+    hintBlack: document.getElementById('hintBlack'),
     pedalBtn: document.getElementById('pedalBtn'),
     pedalState: document.getElementById('pedalState'),
     toast: document.getElementById('toast')
@@ -1601,12 +1754,25 @@
   const state = {
     baseOctave: 3,
     labels: !isCoarse,
+    keymap: 'dual',
+    bigKeys: isCoarse,
     volume: 0.7,
     tone: 0.5,
     pedal: false,
     recording: false,
     playing: false
   };
+
+  try {
+    const savedKeymap = localStorage.getItem('web-piano-keymap');
+    if (savedKeymap === 'dual' || savedKeymap === 'single') state.keymap = savedKeymap;
+    const savedBig = localStorage.getItem('web-piano-bigkeys');
+    if (savedBig === '0' || savedBig === '1') state.bigKeys = savedBig === '1';
+    const savedLabels = localStorage.getItem('web-piano-labels');
+    if (savedLabels === '0' || savedLabels === '1') state.labels = savedLabels === '1';
+  } catch (err) { /* ignore */ }
+
+  let assistOpen = false;
 
   const keyEls = new Map();
   const active = new Map();
@@ -2198,20 +2364,48 @@
     const width = window.innerWidth;
     const pad = width < 680 ? 34 : 76;
     const available = Math.min(width - pad, 1490);
-    const visible = width < 560 ? 14 : width < 900 ? 19 : width < 1280 ? 24 : 28;
-    const keyWidth = clamp(available / visible, 23, 54);
+    const baseVisible = width < 560 ? 14 : width < 900 ? 19 : width < 1280 ? 24 : 28;
+    const visible = Math.max(8, Math.round(baseVisible * (state.bigKeys ? 0.72 : 1)));
+    const maxKey = state.bigKeys ? 88 : 54;
+    const keyWidth = clamp(available / visible, 23, maxKey);
     document.documentElement.style.setProperty('--kw', keyWidth.toFixed(2) + 'px');
+  }
+
+  function activeKeymap() {
+    return state.keymap === 'single' ? KEYMAP_SINGLE : KEYMAP_DUAL;
+  }
+
+  function activeKeyLabels() {
+    return state.keymap === 'single' ? KEYLABEL_SINGLE : KEYLABEL_DUAL;
+  }
+
+  function keymapRange() {
+    const offsets = Object.values(activeKeymap());
+    return { min: Math.min(...offsets), max: Math.max(...offsets) };
+  }
+
+  function updateKeyHints() {
+    if (!dom.hintWhite || !dom.hintBlack) return;
+    if (state.keymap === 'single') {
+      dom.hintWhite.innerHTML = '<kbd>A</kbd>–<kbd>J</kbd> / <kbd>K</kbd><kbd>L</kbd><kbd>;</kbd> 白键';
+      dom.hintBlack.innerHTML = '<kbd>W</kbd><kbd>E</kbd><kbd>T</kbd><kbd>Y</kbd><kbd>U</kbd><kbd>O</kbd><kbd>P</kbd> 黑键';
+    } else {
+      dom.hintWhite.innerHTML = '<kbd>Z</kbd>–<kbd>M</kbd> / <kbd>Q</kbd>–<kbd>P</kbd> 白键';
+      dom.hintBlack.innerHTML = '<kbd>S</kbd><kbd>D</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd> / <kbd>2</kbd><kbd>3</kbd><kbd>5</kbd><kbd>6</kbd><kbd>7</kbd><kbd>9</kbd><kbd>0</kbd> 黑键';
+    }
   }
 
   const mapping = new Map();
 
   function updateMapping(initial) {
     const base = baseMidi();
+    const keymap = activeKeymap();
+    const labels = activeKeyLabels();
     mapping.clear();
 
-    for (const code of Object.keys(KEYMAP)) {
-      const midi = base + KEYMAP[code];
-      if (midi >= FIRST && midi <= LAST) mapping.set(midi, KEYLABEL[code]);
+    for (const code of Object.keys(keymap)) {
+      const midi = base + keymap[code];
+      if (midi >= FIRST && midi <= LAST) mapping.set(midi, labels[code]);
     }
 
     keyEls.forEach((key, midi) => {
@@ -2221,12 +2415,15 @@
       cap.classList.toggle('on', label !== '');
     });
 
-    dom.octLabel.textContent = `${noteName(base)} – ${noteName(base + 28)}`;
+    const range = keymapRange();
+    dom.octLabel.textContent = `${noteName(base + range.min)} – ${noteName(base + range.max)}`;
+    updateKeyHints();
     if (!initial) scrollToBase(true);
   }
 
   function scrollToBase(smooth) {
-    const key = keyEls.get(baseMidi());
+    const range = keymapRange();
+    const key = keyEls.get(baseMidi() + range.min);
     if (!key) return;
     const left = Math.max(0, key.offsetLeft - 26);
     dom.scroll.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
@@ -2234,7 +2431,66 @@
 
   function applyLabels() {
     document.body.classList.toggle('no-labels', !state.labels);
-    dom.labelBtn.classList.toggle('active', state.labels);
+    try {
+      localStorage.setItem('web-piano-labels', state.labels ? '1' : '0');
+    } catch (err) { /* ignore */ }
+    updateAssistUI();
+  }
+
+  function applyKeymap(mode) {
+    state.keymap = mode === 'single' ? 'single' : 'dual';
+    try {
+      localStorage.setItem('web-piano-keymap', state.keymap);
+    } catch (err) { /* ignore */ }
+    updateMapping(false);
+    updateAssistUI();
+  }
+
+  function applyBigKeys(big) {
+    state.bigKeys = Boolean(big);
+    try {
+      localStorage.setItem('web-piano-bigkeys', state.bigKeys ? '1' : '0');
+    } catch (err) { /* ignore */ }
+    fitKeys();
+    Player.resize();
+    scrollToBase(true);
+    updateAssistUI();
+  }
+
+  function updateAssistUI() {
+    if (!dom.assistPanel) return;
+    dom.assistPanel.hidden = !assistOpen;
+    dom.labelBtn.classList.toggle('active', assistOpen);
+    dom.labelBtn.setAttribute('aria-expanded', String(assistOpen));
+
+    dom.keymapSeg.querySelectorAll('[data-keymap]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.keymap === state.keymap);
+    });
+    dom.bigSeg.querySelectorAll('[data-big]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.big === (state.bigKeys ? '1' : '0'));
+    });
+    dom.labelsSeg.querySelectorAll('[data-labels]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.labels === (state.labels ? '1' : '0'));
+    });
+
+    dom.assistHint.textContent = state.keymap === 'single'
+      ? '单排：A–; 白键（C4–E5），W/E/T/Y/U/O/P 黑键，按和弦更顺；方向键换八度。'
+      : '双排：Z–M 低音 / Q–P 高音；S/D/G/H/J 与 2/3/5/6/7/9/0 是黑键。';
+  }
+
+  function openAssist() {
+    assistOpen = true;
+    updateAssistUI();
+  }
+
+  function closeAssist() {
+    assistOpen = false;
+    updateAssistUI();
+  }
+
+  function toggleAssist() {
+    if (assistOpen) closeAssist();
+    else openAssist();
   }
 
   function shiftOctave(direction) {
@@ -4266,6 +4522,13 @@
       Art.close();
       return;
     }
+    if (assistOpen) {
+      if (event.code === 'Escape') {
+        event.preventDefault();
+        closeAssist();
+      }
+      return;
+    }
     const tag = event.target && event.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -4290,7 +4553,7 @@
       return;
     }
 
-    const offset = KEYMAP[event.code];
+    const offset = activeKeymap()[event.code];
     if (offset == null) return;
     event.preventDefault();
     if (event.repeat || heldKeys.has(event.code)) return;
@@ -4338,7 +4601,10 @@
     Art.sync();
   });
 
-  dom.artBtn.addEventListener('click', () => Art.open());
+  dom.artBtn.addEventListener('click', () => {
+    closeAssist();
+    Art.open();
+  });
 
   dom.artExitBtn.addEventListener('click', () => Art.close());
   dom.artPlayBtn.addEventListener('click', () => {
@@ -4577,9 +4843,33 @@
   dom.octDown.addEventListener('click', () => shiftOctave(-1));
   dom.octUp.addEventListener('click', () => shiftOctave(1));
 
-  dom.labelBtn.addEventListener('click', () => {
-    state.labels = !state.labels;
-    applyLabels();
+  dom.labelBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleAssist();
+  });
+
+  dom.assistClose.addEventListener('click', () => closeAssist());
+
+  dom.keymapSeg.querySelectorAll('[data-keymap]').forEach((button) => {
+    button.addEventListener('click', () => applyKeymap(button.dataset.keymap));
+  });
+
+  dom.bigSeg.querySelectorAll('[data-big]').forEach((button) => {
+    button.addEventListener('click', () => applyBigKeys(button.dataset.big === '1'));
+  });
+
+  dom.labelsSeg.querySelectorAll('[data-labels]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.labels = button.dataset.labels === '1';
+      applyLabels();
+    });
+  });
+
+  dom.assistPanel.addEventListener('pointerdown', (event) => event.stopPropagation());
+  document.addEventListener('pointerdown', (event) => {
+    if (!assistOpen) return;
+    if (dom.assistPanel.contains(event.target) || dom.labelBtn.contains(event.target)) return;
+    closeAssist();
   });
 
   dom.pedalBtn.addEventListener('click', () => {
